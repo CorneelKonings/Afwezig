@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Afmelden Dinsdagvergadering</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <style>
-    body {
-      box-sizing: border-box;
-    }
+    body { box-sizing: border-box; }
   </style>
 </head>
 <body class="h-full bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
@@ -20,11 +17,10 @@
         <p class="text-gray-600">Meld je af voor de dinsdagvergadering</p>
       </header>
 
-      <form id="afmeldForm" class="space-y-6">
+      <!-- Formspree formulier -->
+      <form action="https://formspree.io/f/mwprzgjk" method="POST" class="space-y-6">
         <div>
-          <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">
-            Kies een dinsdag
-          </label>
+          <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">Kies een dinsdag</label>
           <select id="datum" name="datum" required 
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
             <option value="">Selecteer een datum</option>
@@ -32,9 +28,7 @@
         </div>
 
         <div>
-          <label for="naam" class="block text-sm font-medium text-gray-700 mb-2">
-            Jouw naam
-          </label>
+          <label for="naam" class="block text-sm font-medium text-gray-700 mb-2">Jouw naam</label>
           <input type="text" id="naam" name="naam" required
                  placeholder="Voer je volledige naam in"
                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
@@ -51,7 +45,7 @@
           <div class="text-green-600 mr-3">✓</div>
           <div>
             <h3 class="text-green-800 font-medium">Afmelding verstuurd!</h3>
-            <p class="text-green-700 text-sm mt-1">Je afmelding is succesvol verzonden naar voortechniek@gmail.com.</p>
+            <p class="text-green-700 text-sm mt-1">Je afmelding is succesvol verzonden.</p>
           </div>
         </div>
       </div>
@@ -59,22 +53,14 @@
   </main>
 
   <script>
-    // ✅ Init EmailJS met jouw public key
-    (function(){
-      emailjs.init("TheQgZPRyAkbzThiz");
-    })();
-
-    // ✅ Volgende 8 dinsdagen genereren
+    // Volgende 8 dinsdagen genereren
     function genereerDinsdagen() {
       const dinsdagen = [];
       const vandaag = new Date();
       let datum = new Date(vandaag);
       const dagenTotDinsdag = (2 - datum.getDay() + 7) % 7;
-      if (dagenTotDinsdag === 0 && datum.getHours() >= 18) {
-        datum.setDate(datum.getDate() + 7);
-      } else {
-        datum.setDate(datum.getDate() + dagenTotDinsdag);
-      }
+      if (dagenTotDinsdag === 0 && datum.getHours() >= 18) datum.setDate(datum.getDate() + 7);
+      else datum.setDate(datum.getDate() + dagenTotDinsdag);
       for (let i = 0; i < 8; i++) {
         dinsdagen.push(new Date(datum));
         datum.setDate(datum.getDate() + 7);
@@ -82,7 +68,7 @@
       return dinsdagen;
     }
 
-    // ✅ Dropdown vullen
+    // Dropdown vullen
     function vulDatumDropdown() {
       const select = document.getElementById('datum');
       const dinsdagen = genereerDinsdagen();
@@ -100,42 +86,6 @@
       });
     }
 
-    // ✅ Verzendformulier
-    document.getElementById('afmeldForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const datum = document.getElementById('datum').value;
-      const naam = document.getElementById('naam').value;
-
-      if (!datum || !naam.trim()) return;
-
-      const datumFormatted = new Date(datum).toLocaleDateString('nl-NL', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-
-      // ✅ Mail versturen via EmailJS
-      emailjs.send("service_683zbph", "template_uffxemy", {
-        naam: naam,
-        datum: datumFormatted
-      }).then(() => {
-        document.getElementById('afmeldForm').style.display = 'none';
-        document.getElementById('bevestiging').classList.remove('hidden');
-      }).catch((error) => {
-        console.error("Email fout:", error);
-        alert("Verzenden mislukt. Bekijk de console voor details.");
-      });
-
-      setTimeout(() => {
-        document.getElementById('afmeldForm').style.display = 'block';
-        document.getElementById('bevestiging').classList.add('hidden');
-        document.getElementById('afmeldForm').reset();
-      }, 5000);
-    });
-
-    // ✅ Pagina starten
     vulDatumDropdown();
   </script>
 </body>
