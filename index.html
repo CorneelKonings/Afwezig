@@ -4,6 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Schijf Van Phaistos</title>
+  <script>
+    function createFavicon() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      // Zwarte cirkel
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(32, 32, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glans (lichte halve cirkel boven)
+      const grad = ctx.createRadialGradient(32, 20, 2, 32, 20, 32);
+      grad.addColorStop(0, 'rgba(255,255,255,0.4)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(32, 32, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // SVP tekst
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('SVP', 32, 32);
+
+      // Voeg toe als favicon
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = canvas.toDataURL('image/png');
+      document.head.appendChild(link);
+    }
+
+    createFavicon();
+  </script>
+</head>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -151,7 +191,7 @@
 
   <!-- Navigatie -->
   <header>
-    <button id="openAfmelden">Afwezigheid Melden</button>
+    <button id="openAfmelden">Afwezigheid melden</button>
   </header>
 
   <!-- Logo -->
@@ -164,7 +204,6 @@
     <div id="modalContent">
       <span id="closeModal">&times;</span>
       <h2 class="text-xl font-bold mb-2 text-white">Afmelden Vergadering</h2>
-      <p class="text-gray-300 mb-4">Meld je af voor de dinsdagvergadering</p>
       <form action="https://formspree.io/f/xanpzapb" method="POST">
         <label for="datum" class="block mb-1 font-medium text-white">Kies een dinsdag</label>
         <select id="datum" name="datum" required>
@@ -180,7 +219,7 @@
   </div>
 
   <script>
-    /* 🌌 Achtergrondbolletjes */
+    // 🌌 Achtergrondbolletjes
     const background = document.getElementById('backgroundDots');
     for(let i=0; i<60; i++){
       const dot = document.createElement('div');
@@ -192,7 +231,7 @@
       background.appendChild(dot);
     }
 
-    /* ✨ Logo met bolletjes */
+    // ✨ Logo SVP met bolletjes en glow/pulse
     const canvas = document.getElementById('logoCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -226,14 +265,16 @@
       }
     }
 
-    let freezeTimer = 2; // seconden wachten
+    let freezeTimer = 2;
     let forming = true;
     let freeze = false;
     let freezeStart = null;
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
+      const time = Date.now() * 0.002;
+
+      particles.forEach((p, i) => {
         if (forming && !freeze) {
           p.x += (p.targetX - p.x) * 0.07;
           p.y += (p.targetY - p.y) * 0.07;
@@ -241,11 +282,18 @@
           p.x += (Math.random() * canvas.width - p.x) * 0.07;
           p.y += (Math.random() * canvas.height - p.y) * 0.07;
         }
-        ctx.fillStyle = p.color;
+
+        // Glow + pulse
+        const pulse = Math.sin(time + i * 0.3) * 0.5 + 0.5;
+        const glow = 0.3 + pulse * 0.7;
+        ctx.shadowBlur = 15 * glow;
+        ctx.shadowColor = `rgba(255,255,255,${glow})`;
+        ctx.fillStyle = `rgba(255,255,255,${0.6 + pulse * 0.4})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2 + pulse * 0.8, 0, Math.PI * 2);
         ctx.fill();
       });
+
       requestAnimationFrame(animate);
     }
     animate();
@@ -260,7 +308,7 @@
       }, 400);
     });
 
-    /* 📅 Dinsdagdata vullen */
+    // 📅 Dinsdagdata
     function genereerDinsdagen() {
       const dinsdagen = [];
       let vandaag = new Date();
@@ -283,7 +331,7 @@
     }
     vulDatumDropdown();
 
-    /* 💬 Modal functionaliteit */
+    // 💬 Modal
     const openModalBtn = document.getElementById('openAfmelden');
     const modal = document.getElementById('afmeldenModal');
     const modalContent = document.getElementById('modalContent');
