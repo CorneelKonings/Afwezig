@@ -1,92 +1,313 @@
 <!DOCTYPE html>
-<html lang="nl" class="h-full">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Afmelden Dinsdagvergadering</title>
+  <title>Skybound Studios</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background: radial-gradient(circle at top left, #0a0a0a, #000);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Achtergrondbolletjes */
+    .background-dots {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .dot {
+      position: absolute;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); opacity: 0.5; }
+      50% { transform: translateY(-20px); opacity: 1; }
+      100% { transform: translateY(0px); opacity: 0.5; }
+    }
+
+    /* Logo */
+    #logo {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Navigatie */
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    header button {
+      color: white;
+      background: transparent;
+      border: 1px solid white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 30px;
+      transition: 0.3s;
+    }
+
+    header button:hover {
+      background: white;
+      color: black;
+    }
+
+    /* Popup modal */
+    #afmeldenModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+    }
+
+    #modalContent {
+      background: #111;
+      border: 2px solid #fff;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      transform: translateY(50px);
+      opacity: 0;
+      transition: all 0.5s ease;
+      position: relative;
+    }
+
+    #closeModal {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: black;
+      color: white;
+      margin-bottom: 1rem;
+    }
+
+    button.submit {
+      width: 100%;
+      background: white;
+      color: black;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    button.submit:hover {
+      background: #ddd;
+    }
   </style>
 </head>
-<body class="h-full bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
-  <main class="min-h-full flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-      <header class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">Afmelden Vergadering</h1>
-        <p class="text-gray-600">Meld je af voor de dinsdagvergadering</p>
-      </header>
+<body>
 
-      <!-- Formspree formulier -->
-      <form action="https://formspree.io/f/mwprzgjk" method="POST" class="space-y-6">
-        <div>
-          <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">Kies een dinsdag</label>
-          <select id="datum" name="datum" required 
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-            <option value="">Selecteer een datum</option>
-          </select>
-        </div>
+  <!-- Achtergrond bolletjes -->
+  <div class="background-dots" id="backgroundDots"></div>
 
-        <div>
-          <label for="naam" class="block text-sm font-medium text-gray-700 mb-2">Jouw naam</label>
-          <input type="text" id="naam" name="naam" required
-                 placeholder="Voer je volledige naam in"
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-        </div>
+  <!-- Navigatie -->
+  <header>
+    <button id="openAfmelden">Afwezigheden</button>
+  </header>
 
-        <button type="submit" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-          Afmelden versturen
-        </button>
+  <!-- Logo -->
+  <div id="logo">
+    <canvas id="logoCanvas"></canvas>
+  </div>
+
+  <!-- Modal -->
+  <div id="afmeldenModal">
+    <div id="modalContent">
+      <span id="closeModal">&times;</span>
+      <h2 class="text-xl font-bold mb-2 text-white">Afmelden Vergadering</h2>
+      <p class="text-gray-300 mb-4">Meld je af voor de dinsdagvergadering</p>
+      <form action="https://formspree.io/f/mwprzgjk" method="POST">
+        <label for="datum" class="block mb-1 font-medium text-white">Kies een dinsdag</label>
+        <select id="datum" name="datum" required>
+          <option value="">Selecteer datum</option>
+        </select>
+
+        <label for="naam" class="block mb-1 font-medium text-white">Jouw naam</label>
+        <input type="text" id="naam" name="naam" placeholder="Naam" required>
+
+        <button type="submit" class="submit">Afmelden versturen</button>
       </form>
-
-      <div id="bevestiging" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <div class="flex items-center">
-          <div class="text-green-600 mr-3">✓</div>
-          <div>
-            <h3 class="text-green-800 font-medium">Afmelding verstuurd!</h3>
-            <p class="text-green-700 text-sm mt-1">Je afmelding is succesvol verzonden.</p>
-          </div>
-        </div>
-      </div>
     </div>
-  </main>
+  </div>
 
   <script>
-    // Volgende 8 dinsdagen genereren
+    /* 🌌 Achtergrondbolletjes */
+    const background = document.getElementById('backgroundDots');
+    for(let i=0; i<60; i++){
+      const dot = document.createElement('div');
+      dot.classList.add('dot');
+      dot.style.width = dot.style.height = `${Math.random()*6+2}px`;
+      dot.style.top = `${Math.random()*100}%`;
+      dot.style.left = `${Math.random()*100}%`;
+      dot.style.animationDelay = `${Math.random()*4}s`;
+      background.appendChild(dot);
+    }
+
+    /* ✨ Logo met bolletjes */
+    const canvas = document.getElementById('logoCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const text = "SVP";
+    const fontSize = 200;
+
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 + fontSize / 4);
+
+    const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < canvas.height; y += 6) {
+      for (let x = 0; x < canvas.width; x += 6) {
+        const i = (y * canvas.width + x) * 4;
+        if (textData.data[i + 3] > 128) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            targetX: x,
+            targetY: y,
+            size: 2,
+            color: "white"
+          });
+        }
+      }
+    }
+
+    let freezeTimer = 2; // seconden wachten
+    let forming = true;
+    let freeze = false;
+    let freezeStart = null;
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        if (forming && !freeze) {
+          p.x += (p.targetX - p.x) * 0.07;
+          p.y += (p.targetY - p.y) * 0.07;
+        } else if (!forming && !freeze) {
+          p.x += (Math.random() * canvas.width - p.x) * 0.07;
+          p.y += (Math.random() * canvas.height - p.y) * 0.07;
+        }
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('scroll', () => {
+      if (freeze) return;
+      forming = false;
+      clearTimeout(freezeStart);
+      freezeStart = setTimeout(() => {
+        freeze = true;
+        setTimeout(() => { freeze = false; forming = true; }, freezeTimer * 1000);
+      }, 400);
+    });
+
+    /* 📅 Dinsdagdata vullen */
     function genereerDinsdagen() {
       const dinsdagen = [];
-      const vandaag = new Date();
-      let datum = new Date(vandaag);
-      const dagenTotDinsdag = (2 - datum.getDay() + 7) % 7;
-      if (dagenTotDinsdag === 0 && datum.getHours() >= 18) datum.setDate(datum.getDate() + 7);
-      else datum.setDate(datum.getDate() + dagenTotDinsdag);
+      let vandaag = new Date();
+      vandaag.setDate(vandaag.getDate() + ((2 - vandaag.getDay() + 7) % 7));
       for (let i = 0; i < 8; i++) {
-        dinsdagen.push(new Date(datum));
-        datum.setDate(datum.getDate() + 7);
+        dinsdagen.push(new Date(vandaag));
+        vandaag.setDate(vandaag.getDate() + 7);
       }
       return dinsdagen;
     }
 
-    // Dropdown vullen
     function vulDatumDropdown() {
       const select = document.getElementById('datum');
-      const dinsdagen = genereerDinsdagen();
-      dinsdagen.forEach(datum => {
-        const option = document.createElement('option');
-        const datumString = datum.toLocaleDateString('nl-NL', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        option.value = datum.toISOString().split('T')[0];
-        option.textContent = datumString;
-        select.appendChild(option);
+      genereerDinsdagen().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.toISOString().split('T')[0];
+        opt.textContent = d.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        select.appendChild(opt);
       });
     }
-
     vulDatumDropdown();
+
+    /* 💬 Modal functionaliteit */
+    const openModalBtn = document.getElementById('openAfmelden');
+    const modal = document.getElementById('afmeldenModal');
+    const modalContent = document.getElementById('modalContent');
+    const closeModalBtn = document.getElementById('closeModal');
+
+    openModalBtn.addEventListener('click', e => {
+      e.preventDefault();
+      modal.style.display = "flex";
+      setTimeout(() => { modalContent.style.transform = "translateY(0)"; modalContent.style.opacity = "1"; }, 50);
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      modalContent.style.transform = "translateY(50px)";
+      modalContent.style.opacity = "0";
+      setTimeout(() => { modal.style.display = "none"; }, 500);
+    });
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) {
+        modalContent.style.transform = "translateY(50px)";
+        modalContent.style.opacity = "0";
+        setTimeout(() => { modal.style.display = "none"; }, 500);
+      }
+    });
   </script>
 </body>
 </html>
